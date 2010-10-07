@@ -14,5 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'hornetseye_frame'
-require 'hornetseye-v4l2/v4l2input'
+# Namespace of Hornetseye computer vision library
+module Hornetseye
+
+  class V4L2Input
+
+    class << self
+
+      alias_method :orig_new, :new
+
+      def new( device = '/dev/video0', width = -1, height = -1,
+               preferred_colourspace = '' )
+        orig_new device, width, height, preferred_colourspace.to_s
+      end
+
+    end
+
+  end
+
+end
+
