@@ -116,7 +116,7 @@ begin
     s.rdoc_options = %w{--no-private}
     s.add_dependency %<malloc>, [ '~> 1.1' ]
     s.add_dependency %<multiarray>, [ '~> 0.8' ]
-    s.add_dependency %<hornetseye-frame>, [ '~> 0.4' ]
+    s.add_dependency %<hornetseye-frame>, [ '~> 0.5' ]
     s.add_development_dependency %q{rake}
   end
   GEM_SOURCE = "#{PKG_NAME}-#{PKG_VERSION}.gem"
@@ -139,7 +139,7 @@ begin
     s.rdoc_options = %w{--no-private}
     s.add_dependency %<malloc>, [ '~> 1.1' ]
     s.add_dependency %<multiarray>, [ '~> 0.8' ]
-    s.add_dependency %<hornetseye-frame>, [ '~> 0.4' ]
+    s.add_dependency %<hornetseye-frame>, [ '~> 0.5' ]
   end
   GEM_BINARY = "#{PKG_NAME}-#{PKG_VERSION}-#{$BINSPEC.platform}.gem"
   desc "Build the gem file #{GEM_SOURCE}"

@@ -1,5 +1,5 @@
 /* HornetsEye - Computer Vision with Ruby
-   Copyright (C) 2006, 2007, 2008, 2009, 2010   Jan Wedekind
+   Copyright (C) 2006, 2007   Jan Wedekind
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,27 +13,20 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-#include "v4l2input.hh"
-#include "rubyinc.hh"
+#include <cassert>
+#include "error.hh"
 
-#ifdef WIN32
-#define DLLEXPORT __declspec(dllexport)
-#define DLLLOCAL
-#else
-#define DLLEXPORT __attribute__ ((visibility("default")))
-#define DLLLOCAL __attribute__ ((visibility("hidden")))
-#endif
-
-extern "C" DLLEXPORT void Init_hornetseye_v4l2(void);
-
-extern "C" {
-
-  void Init_hornetseye_v4l2(void)
-  {
-    rb_require( "hornetseye_frame" );
-    VALUE rbHornetseye = rb_define_module( "Hornetseye" );
-    V4L2Input::registerRubyClass( rbHornetseye );
-    rb_require( "hornetseye_v4l2_ext.rb" );
-  }
-
+inline void checkType( VALUE rbValue, VALUE rbClass )
+{
+  ERRORMACRO( rb_funcall( rbValue, rb_intern( "kind_of?" ), 1, rbClass ) ==
+              Qtrue, Error, ,
+              "Argument must be of class \"" << rb_class2name( rbClass )
+              << "\"." );
 }
+
+inline void checkStruct( VALUE rbValue, VALUE rbClass )
+{
+  Check_Type( rbValue, T_DATA );
+  checkType( rbValue, rbClass );
+}
+

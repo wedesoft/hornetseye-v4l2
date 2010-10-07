@@ -13,27 +13,30 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-#include "v4l2input.hh"
+#ifndef FRAME_HH
+#define FRAME_HH
+
+#include <boost/smart_ptr.hpp>
 #include "rubyinc.hh"
+#include <string>
 
-#ifdef WIN32
-#define DLLEXPORT __declspec(dllexport)
-#define DLLLOCAL
-#else
-#define DLLEXPORT __attribute__ ((visibility("default")))
-#define DLLLOCAL __attribute__ ((visibility("hidden")))
+class Frame
+{
+public:
+  Frame( const std::string &typecode, int width, int height, char *data = NULL );
+  Frame( VALUE rbFrame ): m_frame( rbFrame ) {}
+  virtual ~Frame(void) {}
+  std::string typecode(void);
+  int width(void);
+  int height(void);
+  char *data(void);
+  VALUE rubyObject(void) { return m_frame; }
+  void markRubyMember(void);
+  static int storageSize( const std::string &typecode, int width, int height );
+protected:
+  VALUE m_frame;
+};
+
+typedef boost::shared_ptr< Frame > FramePtr;
+
 #endif
-
-extern "C" DLLEXPORT void Init_hornetseye_v4l2(void);
-
-extern "C" {
-
-  void Init_hornetseye_v4l2(void)
-  {
-    rb_require( "hornetseye_frame" );
-    VALUE rbHornetseye = rb_define_module( "Hornetseye" );
-    V4L2Input::registerRubyClass( rbHornetseye );
-    rb_require( "hornetseye_v4l2_ext.rb" );
-  }
-
-}
