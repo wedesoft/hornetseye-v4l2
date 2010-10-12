@@ -30,6 +30,7 @@ public:
   int width(void);
   int height(void);
   char *data(void);
+  bool rgb(void);
   VALUE rubyObject(void) { return m_frame; }
   void markRubyMember(void);
   static int storageSize( const std::string &typecode, int width, int height );

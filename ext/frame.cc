@@ -60,6 +60,11 @@ char *Frame::data(void)
   return ptr;
 }
 
+bool Frame::rgb(void)
+{
+  return rb_funcall( m_frame, rb_intern( "rgb?" ), 0 ) != Qfalse;
+}
+
 void Frame::markRubyMember(void)
 {
   rb_gc_mark( m_frame );
