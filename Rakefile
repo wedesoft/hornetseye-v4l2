@@ -46,7 +46,7 @@ task :all => [ SO_FILE ]
 
 file SO_FILE => OBJ do |t|
    sh "#{CXX} -shared -o #{t.name} #{OBJ} -lv4l2 #{$LIBRUBYARG}"
-   # sh "#{STRIP} --strip-all #{t.name}"
+   sh "#{STRIP} --strip-all #{t.name}"
 end
 
 task :test => [ SO_FILE ]
