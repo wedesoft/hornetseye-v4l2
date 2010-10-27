@@ -9,7 +9,6 @@ require 'rbconfig'
 PKG_NAME = 'hornetseye-v4l2'
 PKG_VERSION = '0.1.0'
 CXX = ENV[ 'CXX' ] || 'g++'
-STRIP = ENV[ 'STRIP' ] || 'strip'
 RB_FILES = FileList[ 'lib/**/*.rb' ]
 CC_FILES = FileList[ 'ext/*.cc' ]
 HH_FILES = FileList[ 'ext/*.hh' ] + FileList[ 'ext/*.tcc' ]
@@ -46,7 +45,6 @@ task :all => [ SO_FILE ]
 
 file SO_FILE => OBJ do |t|
    sh "#{CXX} -shared -o #{t.name} #{OBJ} -lv4l2 #{$LIBRUBYARG}"
-   sh "#{STRIP} --strip-all #{t.name}"
 end
 
 task :test => [ SO_FILE ]
