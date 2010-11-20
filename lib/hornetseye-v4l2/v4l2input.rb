@@ -17,12 +17,29 @@
 # Namespace of Hornetseye computer vision library
 module Hornetseye
 
+  # Class for handling a V4L2-compatible camera
+  #
+  # @see http://v4l2spec.bytesex.org/spec-single/v4l2.html
   class V4L2Input
 
     class << self
 
       alias_method :orig_new, :new
 
+      # Open a camera device for input
+      #
+      # The device is opened and a list of supported resolutions is handed back as
+      # parameter to the code block. The code block must return the selected mode
+      # so that initialisation can be completed.
+      #
+      # @example Open a camera device
+      #   require 'hornetseye_v4l2'
+      #   include Hornetseye
+      #   camera = V4L2Input.new { |modes| modes.last }
+      #
+      # @param [String] device The device file name.
+      # @param [Proc] action A block for selecting the desired video mode.
+      # @return [V4L2Input] An object for accessing the camera.
       def new( device = '/dev/video0', &action )
         orig_new device do |modes|
           map = { MODE_UYVY   => UYVY,

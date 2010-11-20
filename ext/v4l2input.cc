@@ -672,7 +672,6 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                     RUBY_METHOD_FUNC( wrapFeatureStep ), 1 );
   rb_define_method( cRubyClass, "feature_default_value",
                     RUBY_METHOD_FUNC( wrapFeatureDefaultValue ), 1 );
-  
   return cRubyClass;
 }
 
