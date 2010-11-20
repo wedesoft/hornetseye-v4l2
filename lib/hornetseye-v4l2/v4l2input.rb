@@ -23,9 +23,27 @@ module Hornetseye
 
       alias_method :orig_new, :new
 
-      def new( device = '/dev/video0', width = -1, height = -1,
-               preferred_colourspace = '' )
-        orig_new device, width, height, preferred_colourspace.to_s
+      def new( device = '/dev/video0', &action )
+        orig_new device do |modes|
+          map = { MODE_UYVY   => UYVY,
+                  MODE_YUYV   => YUY2,
+                  MODE_YUV420 => I420,
+                  MODE_GREY   => UBYTE,
+                  MODE_RGB24  => UBYTERGB }
+          frame_types, index = [], []
+          modes.each_with_index do |mode,i|
+            target = map[ mode.first ]
+            if target
+              frame_types.push Hornetseye::Frame( target, *mode[ 1 .. 2 ] )
+              index.push i
+            end
+          end
+          desired = action.call frame_types
+          unless frame_types.member? desired
+            raise "Frame type #{desired} not supported by camera"
+          end
+          index[ frame_types.index( desired ) ]
+        end
       end
 
     end

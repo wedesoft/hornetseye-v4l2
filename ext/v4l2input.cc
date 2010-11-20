@@ -30,9 +30,7 @@ using namespace std;
 
 VALUE V4L2Input::cRubyClass = Qnil;
 
-V4L2Input::V4L2Input( const string &device, int width, int height,
-                      string preferredTypecode )
-  throw (Error):
+V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (Error):
   m_device(device), m_fd(-1), m_io(IO_READ), m_frameUsed(false)
 {
   m_map[ 0 ] = MAP_FAILED;
@@ -59,7 +57,78 @@ V4L2Input::V4L2Input( const string &device, int width, int height,
 #endif
     ERRORMACRO( capability.capabilities & V4L2_CAP_VIDEO_CAPTURE != 0,
                 Error, , m_device << " is no video capture device" );
-    selectPalette( width, height, preferredTypecode );
+    unsigned int formatIndex = 0;
+    while ( true ) {
+      struct v4l2_fmtdesc format;
+      memset( &format, 0, sizeof(format) );
+      format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+      format.index = formatIndex++;
+      int r = xioctl( VIDIOC_ENUM_FMT, &format );
+      if ( r != 0 ) break;
+      unsigned int frameSizeIndex = 0;
+      while ( true ) {
+        struct v4l2_frmsizeenum pix;
+        memset( &pix, 0, sizeof(pix) );
+        pix.pixel_format = format.pixelformat;
+        pix.index = frameSizeIndex++;
+        int r = xioctl( VIDIOC_ENUM_FRAMESIZES, &pix );
+        if ( r != 0 ) break;
+        if ( pix.type == V4L2_FRMSIZE_TYPE_DISCRETE )
+          select->add( format.pixelformat, pix.discrete.width, pix.discrete.height );
+        else if ( pix.type == V4L2_FRMSIZE_TYPE_STEPWISE ) {
+          unsigned int
+            w = pix.stepwise.min_width,
+            h = pix.stepwise.min_height;
+          while ( w <= pix.stepwise.max_width && h <= pix.stepwise.max_height ) {
+            select->add( format.pixelformat, w, h );
+            w += pix.stepwise.step_width;
+            h += pix.stepwise.step_height;
+          };
+        } else {
+          select->add( format.pixelformat,
+                       pix.stepwise.max_width, pix.stepwise.max_height );
+        };
+      };
+    };
+    unsigned int selection = select->make();
+    unsigned int coding = select->coding( selection );
+#ifndef NDEBUG
+    cerr << "selection = " << selection << endl
+         << "coding = " << select->coding( selection ) << endl
+         << "w = " << select->width( selection ) << endl
+         << "h = " << select->height( selection ) << endl;
+#endif
+    m_format.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    m_format.fmt.pix.field       = V4L2_FIELD_NONE;
+    m_format.fmt.pix.width       = select->width( selection );
+    m_format.fmt.pix.height      = select->height( selection );
+    m_format.fmt.pix.pixelformat = coding;
+    m_format.fmt.pix.field       = V4L2_FIELD_SEQ_TB;
+    ERRORMACRO( xioctl( VIDIOC_S_FMT, &m_format ) == 0, Error, ,
+                 "Error switching device \"" << m_device << "\" to selected format" );
+    switch ( coding ) {
+    case V4L2_PIX_FMT_UYVY:
+      m_typecode = "UYVY";
+      break;
+    case V4L2_PIX_FMT_YUYV:
+      m_typecode = "YUY2";
+      break;
+    case V4L2_PIX_FMT_YUV420:
+      m_typecode = "I420";
+      break;
+    case V4L2_PIX_FMT_GREY:
+      m_typecode = "UBYTE";
+      break;
+    case V4L2_PIX_FMT_RGB24:
+      m_typecode = "UBYTERGB";
+      break;
+    case V4L2_PIX_FMT_MJPEG:
+      m_typecode = "MJPG";
+      break;
+    default:
+      ERRORMACRO( false, Error, , "Conversion for DC1394 colorspace " << coding
+                  << " not implemented yet" );
+    };
     if ( capability.capabilities & V4L2_CAP_STREAMING ) {
       try {
 #ifndef NDEBUG
@@ -386,78 +455,195 @@ FramePtr V4L2Input::read(void) throw (Error)
 VALUE V4L2Input::registerRubyClass( VALUE module )
 {
   cRubyClass = rb_define_class_under( module, "V4L2Input", rb_cObject );
-  rb_define_const( cRubyClass, "V4L2_CTRL_TYPE_INTEGER",
-                   INT2FIX(V4L2_CTRL_TYPE_INTEGER) );
-  rb_define_const( cRubyClass, "V4L2_CTRL_TYPE_BOOLEAN",
-                   INT2FIX(V4L2_CTRL_TYPE_BOOLEAN) );
-  rb_define_const( cRubyClass, "V4L2_CTRL_TYPE_MENU",
-                   INT2FIX(V4L2_CTRL_TYPE_MENU) );
-  rb_define_const( cRubyClass, "V4L2_CTRL_TYPE_BUTTON",
-                   INT2FIX(V4L2_CTRL_TYPE_BUTTON) );
-// #ifdef V4L2_CTRL_TYPE_CTRL_CLASS
-  rb_define_const( cRubyClass, "V4L2_CTRL_TYPE_CTRL_CLASS",
-                   INT2FIX(V4L2_CTRL_TYPE_CTRL_CLASS) );
-// #endif
-  rb_define_const( cRubyClass, "V4L2_CID_BASE",
-                   INT2FIX(V4L2_CID_BASE) );
-// #ifdef V4L2_CID_USER_BASE
-  rb_define_const( cRubyClass, "V4L2_CID_USER_BASE",
-                   INT2FIX(V4L2_CID_USER_BASE) );
-// #endif
-  rb_define_const( cRubyClass, "V4L2_CID_PRIVATE_BASE",
-                   INT2FIX(V4L2_CID_PRIVATE_BASE) );
-  rb_define_const( cRubyClass, "V4L2_CID_BRIGHTNESS",
-                   INT2FIX(V4L2_CID_BRIGHTNESS) );
-  rb_define_const( cRubyClass, "V4L2_CID_CONTRAST",
-                   INT2FIX(V4L2_CID_CONTRAST) );
-  rb_define_const( cRubyClass, "V4L2_CID_SATURATION",
-                   INT2FIX(V4L2_CID_SATURATION) );
-  rb_define_const( cRubyClass, "V4L2_CID_HUE",
-                   INT2FIX(V4L2_CID_HUE) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUDIO_VOLUME",
-                   INT2FIX(V4L2_CID_AUDIO_VOLUME) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUDIO_BALANCE",
-                   INT2FIX(V4L2_CID_AUDIO_BALANCE) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUDIO_BASS",
-                   INT2FIX(V4L2_CID_AUDIO_BASS) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUDIO_TREBLE",
-                   INT2FIX(V4L2_CID_AUDIO_TREBLE) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUDIO_MUTE",
-                   INT2FIX(V4L2_CID_AUDIO_MUTE) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUDIO_LOUDNESS",
-                   INT2FIX(V4L2_CID_AUDIO_LOUDNESS) );
-  rb_define_const( cRubyClass, "V4L2_CID_BLACK_LEVEL",
-                   INT2FIX(V4L2_CID_BLACK_LEVEL) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUTO_WHITE_BALANCE",
-                   INT2FIX(V4L2_CID_AUTO_WHITE_BALANCE) );
-  rb_define_const( cRubyClass, "V4L2_CID_DO_WHITE_BALANCE",
-                   INT2FIX(V4L2_CID_DO_WHITE_BALANCE) );
-  rb_define_const( cRubyClass, "V4L2_CID_RED_BALANCE",
-                   INT2FIX(V4L2_CID_RED_BALANCE) );
-  rb_define_const( cRubyClass, "V4L2_CID_BLUE_BALANCE",
-                   INT2FIX(V4L2_CID_BLUE_BALANCE) );
-  rb_define_const( cRubyClass, "V4L2_CID_GAMMA",
-                   INT2FIX(V4L2_CID_GAMMA) );
-  rb_define_const( cRubyClass, "V4L2_CID_WHITENESS",
-                   INT2FIX(V4L2_CID_WHITENESS) );
-  rb_define_const( cRubyClass, "V4L2_CID_EXPOSURE",
-                   INT2FIX(V4L2_CID_EXPOSURE) );
-  rb_define_const( cRubyClass, "V4L2_CID_AUTOGAIN",
-                   INT2FIX(V4L2_CID_AUTOGAIN) );
-  rb_define_const( cRubyClass, "V4L2_CID_GAIN",
-                   INT2FIX(V4L2_CID_GAIN) );
-  rb_define_const( cRubyClass, "V4L2_CID_HFLIP",
-                   INT2FIX(V4L2_CID_HFLIP) );
-  rb_define_const( cRubyClass, "V4L2_CID_VFLIP",
-                   INT2FIX(V4L2_CID_VFLIP) );
-  rb_define_const( cRubyClass, "V4L2_CID_HCENTER",
-                   INT2FIX(V4L2_CID_HCENTER) );
-  rb_define_const( cRubyClass, "V4L2_CID_VCENTER",
-                   INT2FIX(V4L2_CID_VCENTER) );
-  rb_define_const( cRubyClass, "V4L2_CID_LASTP1",
-                   INT2FIX(V4L2_CID_LASTP1) );
-  rb_define_singleton_method( cRubyClass, "new",
-                              RUBY_METHOD_FUNC( wrapNew ), 4 );
+  rb_define_const( cRubyClass, "MODE_RGB332",
+                   INT2NUM(V4L2_PIX_FMT_RGB332) );
+  rb_define_const( cRubyClass, "MODE_RGB444",
+                   INT2NUM(V4L2_PIX_FMT_RGB444) );
+  rb_define_const( cRubyClass, "MODE_RGB555",
+                   INT2NUM(V4L2_PIX_FMT_RGB555) );
+  rb_define_const( cRubyClass, "MODE_RGB565",
+                   INT2NUM(V4L2_PIX_FMT_RGB565) );
+  rb_define_const( cRubyClass, "MODE_RGB555X",
+                   INT2NUM(V4L2_PIX_FMT_RGB555X) );
+  rb_define_const( cRubyClass, "MODE_RGB565X",
+                   INT2NUM(V4L2_PIX_FMT_RGB565X) );
+  rb_define_const( cRubyClass, "MODE_BGR24",
+                   INT2NUM(V4L2_PIX_FMT_BGR24) );
+  rb_define_const( cRubyClass, "MODE_RGB24",
+                   INT2NUM(V4L2_PIX_FMT_RGB24) );
+  rb_define_const( cRubyClass, "MODE_BGR32",
+                   INT2NUM(V4L2_PIX_FMT_BGR32) );
+  rb_define_const( cRubyClass, "MODE_RGB32",
+                   INT2NUM(V4L2_PIX_FMT_RGB32) );
+  rb_define_const( cRubyClass, "MODE_GREY",
+                   INT2NUM(V4L2_PIX_FMT_GREY) );
+  rb_define_const( cRubyClass, "MODE_Y16",
+                   INT2NUM(V4L2_PIX_FMT_Y16) );
+  rb_define_const( cRubyClass, "MODE_PAL8",
+                   INT2NUM(V4L2_PIX_FMT_PAL8) );
+  rb_define_const( cRubyClass, "MODE_YVU410",
+                   INT2NUM(V4L2_PIX_FMT_YVU410) );
+  rb_define_const( cRubyClass, "MODE_YVU420",
+                   INT2NUM(V4L2_PIX_FMT_YVU420) );
+  rb_define_const( cRubyClass, "MODE_YUYV",
+                   INT2NUM(V4L2_PIX_FMT_YUYV) );
+  rb_define_const( cRubyClass, "MODE_YYUV",
+                   INT2NUM(V4L2_PIX_FMT_YYUV) );
+  rb_define_const( cRubyClass, "MODE_YVYU",
+                   INT2NUM(V4L2_PIX_FMT_YVYU) );
+  rb_define_const( cRubyClass, "MODE_UYVY",
+                   INT2NUM(V4L2_PIX_FMT_UYVY) );
+  rb_define_const( cRubyClass, "MODE_VYUY",
+                   INT2NUM(V4L2_PIX_FMT_VYUY) );
+  rb_define_const( cRubyClass, "MODE_YUV422P",
+                   INT2NUM(V4L2_PIX_FMT_YUV422P) );
+  rb_define_const( cRubyClass, "MODE_YUV411P",
+                   INT2NUM(V4L2_PIX_FMT_YUV411P) );
+  rb_define_const( cRubyClass, "MODE_Y41P",
+                   INT2NUM(V4L2_PIX_FMT_Y41P) );
+  rb_define_const( cRubyClass, "MODE_YUV444",
+                   INT2NUM(V4L2_PIX_FMT_YUV444) );
+  rb_define_const( cRubyClass, "MODE_YUV555",
+                   INT2NUM(V4L2_PIX_FMT_YUV555) );
+  rb_define_const( cRubyClass, "MODE_YUV565",
+                   INT2NUM(V4L2_PIX_FMT_YUV565) );
+  rb_define_const( cRubyClass, "MODE_YUV32",
+                   INT2NUM(V4L2_PIX_FMT_YUV32) );
+  rb_define_const( cRubyClass, "MODE_YUV410",
+                   INT2NUM(V4L2_PIX_FMT_YUV410) );
+  rb_define_const( cRubyClass, "MODE_YUV420",
+                   INT2NUM(V4L2_PIX_FMT_YUV420) );
+  rb_define_const( cRubyClass, "MODE_HI240",
+                   INT2NUM(V4L2_PIX_FMT_HI240) );
+  rb_define_const( cRubyClass, "MODE_HM12",
+                   INT2NUM(V4L2_PIX_FMT_HM12) );
+  rb_define_const( cRubyClass, "MODE_NV12",
+                   INT2NUM(V4L2_PIX_FMT_NV12) );
+  rb_define_const( cRubyClass, "MODE_NV21",
+                   INT2NUM(V4L2_PIX_FMT_NV21) );
+  rb_define_const( cRubyClass, "MODE_NV16",
+                   INT2NUM(V4L2_PIX_FMT_NV16) );
+  rb_define_const( cRubyClass, "MODE_NV61",
+                   INT2NUM(V4L2_PIX_FMT_NV61) );
+  rb_define_const( cRubyClass, "MODE_SBGGR8",
+                   INT2NUM(V4L2_PIX_FMT_SBGGR8) );
+  rb_define_const( cRubyClass, "MODE_SGBRG8",
+                   INT2NUM(V4L2_PIX_FMT_SGBRG8) );
+  rb_define_const( cRubyClass, "MODE_SGRBG8",
+                   INT2NUM(V4L2_PIX_FMT_SGRBG8) );
+  rb_define_const( cRubyClass, "MODE_SGRBG10",
+                   INT2NUM(V4L2_PIX_FMT_SGRBG10) );
+  rb_define_const( cRubyClass, "MODE_SGRBG10DPCM8",
+                   INT2NUM(V4L2_PIX_FMT_SGRBG10DPCM8) );
+  rb_define_const( cRubyClass, "MODE_SBGGR16",
+                   INT2NUM(V4L2_PIX_FMT_SBGGR16) );
+  rb_define_const( cRubyClass, "MODE_MJPEG",
+                   INT2NUM(V4L2_PIX_FMT_MJPEG) );
+  rb_define_const( cRubyClass, "MODE_JPEG",
+                   INT2NUM(V4L2_PIX_FMT_JPEG) );
+  rb_define_const( cRubyClass, "MODE_DV",
+                   INT2NUM(V4L2_PIX_FMT_DV) );
+  rb_define_const( cRubyClass, "MODE_MPEG",
+                   INT2NUM(V4L2_PIX_FMT_MPEG) );
+  rb_define_const( cRubyClass, "MODE_WNVA",
+                   INT2NUM(V4L2_PIX_FMT_WNVA) );
+  rb_define_const( cRubyClass, "MODE_SN9C10X",
+                   INT2NUM(V4L2_PIX_FMT_SN9C10X) );
+  rb_define_const( cRubyClass, "MODE_SN9C20X_I420",
+                   INT2NUM(V4L2_PIX_FMT_SN9C20X_I420) );
+  rb_define_const( cRubyClass, "MODE_PWC1",
+                   INT2NUM(V4L2_PIX_FMT_PWC1) );
+  rb_define_const( cRubyClass, "MODE_PWC2",
+                   INT2NUM(V4L2_PIX_FMT_PWC2) );
+  rb_define_const( cRubyClass, "MODE_ET61X251",
+                   INT2NUM(V4L2_PIX_FMT_ET61X251) );
+  rb_define_const( cRubyClass, "MODE_SPCA501",
+                   INT2NUM(V4L2_PIX_FMT_SPCA501) );
+  rb_define_const( cRubyClass, "MODE_SPCA505",
+                   INT2NUM(V4L2_PIX_FMT_SPCA505) );
+  rb_define_const( cRubyClass, "MODE_SPCA508",
+                   INT2NUM(V4L2_PIX_FMT_SPCA508) );
+  rb_define_const( cRubyClass, "MODE_SPCA561",
+                   INT2NUM(V4L2_PIX_FMT_SPCA561) );
+  rb_define_const( cRubyClass, "MODE_PAC207",
+                   INT2NUM(V4L2_PIX_FMT_PAC207) );
+  rb_define_const( cRubyClass, "MODE_MR97310A",
+                   INT2NUM(V4L2_PIX_FMT_MR97310A) );
+  rb_define_const( cRubyClass, "MODE_SQ905C",
+                   INT2NUM(V4L2_PIX_FMT_SQ905C) );
+  rb_define_const( cRubyClass, "MODE_PJPG",
+                   INT2NUM(V4L2_PIX_FMT_PJPG) );
+  rb_define_const( cRubyClass, "MODE_OV511",
+                   INT2NUM(V4L2_PIX_FMT_OV511) );
+  rb_define_const( cRubyClass, "MODE_OV518",
+                   INT2NUM(V4L2_PIX_FMT_OV518) );
+  rb_define_const( cRubyClass, "TYPE_INTEGER",
+                   INT2NUM(V4L2_CTRL_TYPE_INTEGER) );
+  rb_define_const( cRubyClass, "TYPE_BOOLEAN",
+                   INT2NUM(V4L2_CTRL_TYPE_BOOLEAN) );
+  rb_define_const( cRubyClass, "TYPE_MENU",
+                   INT2NUM(V4L2_CTRL_TYPE_MENU) );
+  rb_define_const( cRubyClass, "TYPE_BUTTON",
+                   INT2NUM(V4L2_CTRL_TYPE_BUTTON) );
+  rb_define_const( cRubyClass, "TYPE_CTRL_CLASS",
+                   INT2NUM(V4L2_CTRL_TYPE_CTRL_CLASS) );
+  rb_define_const( cRubyClass, "FEATURE_BASE",
+                   INT2NUM(V4L2_CID_BASE) );
+  rb_define_const( cRubyClass, "FEATURE_USER_BASE",
+                   INT2NUM(V4L2_CID_USER_BASE) );
+  rb_define_const( cRubyClass, "FEATURE_PRIVATE_BASE",
+                   INT2NUM(V4L2_CID_PRIVATE_BASE) );
+  rb_define_const( cRubyClass, "FEATURE_BRIGHTNESS",
+                   INT2NUM(V4L2_CID_BRIGHTNESS) );
+  rb_define_const( cRubyClass, "FEATURE_CONTRAST",
+                   INT2NUM(V4L2_CID_CONTRAST) );
+  rb_define_const( cRubyClass, "FEATURE_SATURATION",
+                   INT2NUM(V4L2_CID_SATURATION) );
+  rb_define_const( cRubyClass, "FEATURE_HUE",
+                   INT2NUM(V4L2_CID_HUE) );
+  rb_define_const( cRubyClass, "FEATURE_AUDIO_VOLUME",
+                   INT2NUM(V4L2_CID_AUDIO_VOLUME) );
+  rb_define_const( cRubyClass, "FEATURE_AUDIO_BALANCE",
+                   INT2NUM(V4L2_CID_AUDIO_BALANCE) );
+  rb_define_const( cRubyClass, "FEATURE_AUDIO_BASS",
+                   INT2NUM(V4L2_CID_AUDIO_BASS) );
+  rb_define_const( cRubyClass, "FEATURE_AUDIO_TREBLE",
+                   INT2NUM(V4L2_CID_AUDIO_TREBLE) );
+  rb_define_const( cRubyClass, "FEATURE_AUDIO_MUTE",
+                   INT2NUM(V4L2_CID_AUDIO_MUTE) );
+  rb_define_const( cRubyClass, "FEATURE_AUDIO_LOUDNESS",
+                   INT2NUM(V4L2_CID_AUDIO_LOUDNESS) );
+  rb_define_const( cRubyClass, "FEATURE_BLACK_LEVEL",
+                   INT2NUM(V4L2_CID_BLACK_LEVEL) );
+  rb_define_const( cRubyClass, "FEATURE_AUTO_WHITE_BALANCE",
+                   INT2NUM(V4L2_CID_AUTO_WHITE_BALANCE) );
+  rb_define_const( cRubyClass, "FEATURE_DO_WHITE_BALANCE",
+                   INT2NUM(V4L2_CID_DO_WHITE_BALANCE) );
+  rb_define_const( cRubyClass, "FEATURE_RED_BALANCE",
+                   INT2NUM(V4L2_CID_RED_BALANCE) );
+  rb_define_const( cRubyClass, "FEATURE_BLUE_BALANCE",
+                   INT2NUM(V4L2_CID_BLUE_BALANCE) );
+  rb_define_const( cRubyClass, "FEATURE_GAMMA",
+                   INT2NUM(V4L2_CID_GAMMA) );
+  rb_define_const( cRubyClass, "FEATURE_WHITENESS",
+                   INT2NUM(V4L2_CID_WHITENESS) );
+  rb_define_const( cRubyClass, "FEATURE_EXPOSURE",
+                   INT2NUM(V4L2_CID_EXPOSURE) );
+  rb_define_const( cRubyClass, "FEATURE_AUTOGAIN",
+                   INT2NUM(V4L2_CID_AUTOGAIN) );
+  rb_define_const( cRubyClass, "FEATURE_GAIN",
+                   INT2NUM(V4L2_CID_GAIN) );
+  rb_define_const( cRubyClass, "FEATURE_HFLIP",
+                   INT2NUM(V4L2_CID_HFLIP) );
+  rb_define_const( cRubyClass, "FEATURE_VFLIP",
+                   INT2NUM(V4L2_CID_VFLIP) );
+  rb_define_const( cRubyClass, "FEATURE_HCENTER",
+                   INT2NUM(V4L2_CID_HCENTER) );
+  rb_define_const( cRubyClass, "FEATURE_VCENTER",
+                   INT2NUM(V4L2_CID_VCENTER) );
+  rb_define_const( cRubyClass, "FEATURE_LASTP1",
+                   INT2NUM(V4L2_CID_LASTP1) );
+  rb_define_singleton_method( cRubyClass, "new", RUBY_METHOD_FUNC( wrapNew ), 1 );
   rb_define_method( cRubyClass, "close",
                     RUBY_METHOD_FUNC( wrapClose ), 0 );
   rb_define_method( cRubyClass, "read",
@@ -495,17 +681,13 @@ void V4L2Input::deleteRubyObject( void *ptr )
   delete (V4L2InputPtr *)ptr;
 }
 
-VALUE V4L2Input::wrapNew( VALUE rbClass, VALUE rbDevice, VALUE rbWidth,
-                          VALUE rbHeight, VALUE rbPreferredTypecode )
+VALUE V4L2Input::wrapNew( VALUE rbClass, VALUE rbDevice )
 {
   VALUE retVal = Qnil;
   try {
     rb_check_type( rbDevice, T_STRING );
-    V4L2InputPtr ptr
-      ( new V4L2Input
-        ( StringValuePtr( rbDevice ), NUM2INT( rbWidth ),
-          NUM2INT( rbHeight ),
-          StringValuePtr( rbPreferredTypecode ) ) );
+    V4L2SelectPtr select( new V4L2Select );
+    V4L2InputPtr ptr( new V4L2Input( StringValuePtr( rbDevice ), select ) );
     retVal = Data_Wrap_Struct( rbClass, 0, deleteRubyObject,
                                new V4L2InputPtr( ptr ) );
   } catch ( std::exception &e ) {
@@ -672,97 +854,5 @@ int V4L2Input::xioctl( int request, void *arg )
 #endif
   } while ( r == -1 && errno == EINTR );
   return r;
-}
-
-void V4L2Input::selectPalette( int width, int height,
-                               string preferredTypecode )
-  throw (Error)
-{
-  typedef struct {
-    const char *typecode;
-    __u32 palette;
-    const char *name;
-  } PaletteEntry;
-  PaletteEntry palette[] = {
-    { "UYVY"    , V4L2_PIX_FMT_UYVY    , "UYVY"     },
-    { "YUY2"    , V4L2_PIX_FMT_YUYV    , "YUY2"     },
-    { "I420"    , V4L2_PIX_FMT_YUV420  , "I420"     },
-    { "UBYTE"   , V4L2_PIX_FMT_GREY    , "UBYTE"    },
-    { "UBYTERGB", V4L2_PIX_FMT_RGB24   , "UBYTERGB" },
-    { "MJPG"    , V4L2_PIX_FMT_MJPEG   , "MJPG"     },
-    { ""        , V4L2_PIX_FMT_RGB332  , "RGB332"   },
-    { ""        , V4L2_PIX_FMT_RGB555  , "RGB555"   },
-    { ""        , V4L2_PIX_FMT_RGB565  , "RGB565"   },
-    { ""        , V4L2_PIX_FMT_RGB555X , "RGB555X"  },
-    { ""        , V4L2_PIX_FMT_RGB565X , "RGB565X"  },
-    { ""        , V4L2_PIX_FMT_BGR24   , "BGR24"    },
-    { ""        , V4L2_PIX_FMT_BGR32   , "BGR32"    },
-    { ""        , V4L2_PIX_FMT_RGB32   , "RGB32"    },
-    { ""        , V4L2_PIX_FMT_YVU410  , "YVU410"   },
-    { ""        , V4L2_PIX_FMT_YVU420  , "YVU420"   },
-    { ""        , V4L2_PIX_FMT_YUV422P , "YUV422P"  },
-    { ""        , V4L2_PIX_FMT_YUV411P , "YUV411P"  },
-    { ""        , V4L2_PIX_FMT_Y41P    , "Y41P"     },
-    { ""        , V4L2_PIX_FMT_NV12    , "NV12"     },
-    { ""        , V4L2_PIX_FMT_NV21    , "NV21"     },
-    { ""        , V4L2_PIX_FMT_YUV410  , "YUV410"   },
-    { ""        , V4L2_PIX_FMT_YYUV    , "YYUV"     },
-    { ""        , V4L2_PIX_FMT_HI240   , "HI240"    },
-// #ifdef V4L2_PIX_FMT_HM12
-    { ""        , V4L2_PIX_FMT_HM12    , "HM12"     },
-// #endif
-// #ifdef V4L2_PIX_FMT_RGB444
-    { ""        , V4L2_PIX_FMT_RGB444  , "RGB444"   },
-// #endif
-    { ""        , V4L2_PIX_FMT_RGB332  , "SBGGR8"   },
-    { ""        , V4L2_PIX_FMT_JPEG    , "JPEG"     },
-    { ""        , V4L2_PIX_FMT_DV      , "DV"       },
-    { ""        , V4L2_PIX_FMT_MPEG    , "MPEG"     },
-    { ""        , V4L2_PIX_FMT_WNVA    , "WNVA"     },
-    { ""        , V4L2_PIX_FMT_SN9C10X , "SN9C10X"  },
-    { ""        , V4L2_PIX_FMT_PWC1    , "PWC1"     },
-    { ""        , V4L2_PIX_FMT_PWC2    , "PWC2"     },
-    { ""        , V4L2_PIX_FMT_ET61X251, "ET61X251" }
-  };
-  
-  memset( &m_format, 0, sizeof(m_format) );
-  int selected = 0;
-  ostringstream s;
-  while ( true ) {
-    m_format.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    m_format.fmt.pix.field       = V4L2_FIELD_NONE;
-    m_format.fmt.pix.width       = width;
-    m_format.fmt.pix.height      = height;
-    m_format.fmt.pix.pixelformat = palette[ selected ].palette;
-    m_format.fmt.pix.field       = V4L2_FIELD_SEQ_TB;
-    int r = xioctl( VIDIOC_S_FMT, &m_format );
-    if ( r == 0 ) {
-      if ( preferredTypecode == palette[ selected ].typecode ||
-           preferredTypecode == "" ) {
-        m_typecode = palette[ selected ].typecode;
-#ifndef NDEBUG
-        cerr << "Camera-driver supports " << palette[ selected ].name
-             << " colourspace." << endl;
-#endif
-        break;
-      } else {
-        s << ' ' << palette[ selected ].name;
-      };
-    };
-    selected++;
-    if ( selected >= (signed)(sizeof(palette)/sizeof(PaletteEntry)) ) {
-      ERRORMACRO( preferredTypecode == "", Error, ,
-                  "Preferred colourspace \"" << preferredTypecode
-                  <<  "\" not supported by camera (supported:"
-                  << s.str() << ")" );
-      ERRORMACRO( false, Error, ,
-                  "Camera-driver doesn't offer a known video-palette" );
-    };
-  };
-
-  ERRORMACRO( palette[ selected ].typecode[0] != '\000',
-              Error, , "Colourspace transformation for "
-              << palette[ selected ].name
-              << "-images not implemented" );
 }
 

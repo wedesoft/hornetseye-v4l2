@@ -24,14 +24,12 @@
 #include <linux/videodev.h>
 #include "error.hh"
 #include "frame.hh"
+#include "v4l2select.hh"
 
 class V4L2Input
 {
 public:
-  V4L2Input( const std::string &device = "/dev/video0",
-             int width = -1, int height = -1,
-             std::string preferredTypecode = "" )
-    throw (Error);
+  V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (Error);
   virtual ~V4L2Input(void);
   void close(void);
   FramePtr read(void) throw (Error);
@@ -51,9 +49,7 @@ public:
   static VALUE cRubyClass;
   static VALUE registerRubyClass( VALUE module );
   static void deleteRubyObject( void *ptr );
-  static VALUE wrapNew( VALUE rbClass, VALUE rbDevice,
-                        VALUE rbWidth, VALUE rbHeight,
-                        VALUE rbPreferredTypecode );
+  static VALUE wrapNew( VALUE rbClass, VALUE rbDevice );
   static VALUE wrapClose( VALUE rbSelf );
   static VALUE wrapRead( VALUE rbSelf );
   static VALUE wrapStatus( VALUE rbSelf );
@@ -71,8 +67,6 @@ public:
   static VALUE wrapFeatureDefaultValue( VALUE rbSelf, VALUE rbId );
 protected:
   int xioctl( int request, void *arg );
-  void selectPalette( int width, int height,
-                      std::string preferredTypecode ) throw (Error);
   std::string m_device;
   int m_fd;
   enum { IO_READ, IO_MMAP, IO_USERPTR } m_io;
