@@ -39,7 +39,7 @@ You can open a V4L2-compatible camera as shown below. This example will open the
     require 'hornetseye_v4l2'
     require 'hornetseye_xorg'
     include Hornetseye
-    camera = V4L2Input.new '/dev/video' do |modes|
+    camera = V4L2Input.new '/dev/video0' do |modes|
       modes.each_with_index { |mode,i| puts "#{i + 1}: #{mode}" }
       modes[ STDIN.readline.to_i - 1 ]
     end
