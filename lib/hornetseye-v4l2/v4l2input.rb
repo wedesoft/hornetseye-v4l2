@@ -30,7 +30,8 @@ module Hornetseye
       #
       # The device is opened and a list of supported resolutions is handed back as
       # parameter to the code block. The code block must return the selected mode
-      # so that initialisation can be completed.
+      # so that initialisation can be completed. If no block is given, the highest
+      # available resolution is selected after giving colour modes preference.
       #
       # @example Open a camera device
       #   require 'hornetseye_v4l2'
@@ -38,7 +39,7 @@ module Hornetseye
       #   camera = V4L2Input.new { |modes| modes.last }
       #
       # @param [String] device The device file name.
-      # @param [Proc] action A block for selecting the desired video mode.
+      # @param [Proc] action An optional block for selecting the desired video mode.
       # @return [V4L2Input] An object for accessing the camera.
       def new( device = '/dev/video0', &action )
         orig_new device do |modes|
@@ -55,7 +56,14 @@ module Hornetseye
               index.push i
             end
           end
-          desired = action.call frame_types
+          if action
+            desired = action.call frame_types
+          else
+            preference = [ I420, UYVY, YUY2, UBYTERGB, UBYTE ]
+            desired = frame_types.sort_by do |mode|
+              [ -preference.index( mode.typecode ), mode.width * mode.height ]
+            end.last
+          end
           unless frame_types.member? desired
             raise "Frame type #{desired.inspect} not supported by camera"
           end
