@@ -13,7 +13,7 @@ This Ruby extension provides the class {Hornetseye::V4L2Input} for capturing vid
 
 Installation
 ------------
-*hornetseye-v4l2* requires the V4L2 heasers. If you are running Debian or (K)ubuntu, you can install them like this:
+*hornetseye-v4l2* requires the V4L2 headers. If you are running Debian or (K)ubuntu, you can install them like this:
 
     $ sudo aptitude install linux-libc-dev
 
