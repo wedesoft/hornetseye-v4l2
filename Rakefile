@@ -82,7 +82,7 @@ begin
   require 'yard'
   YARD::Rake::YardocTask.new :yard do |y|
     y.options << '--no-private'
-    y.files << FileList[ 'lib/**/*.rb' ]
+    y.files << RB_FILES
   end
 rescue LoadError
   STDERR.puts 'Please install \'yard\' if you want to generate documentation'
