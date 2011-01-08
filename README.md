@@ -1,5 +1,5 @@
 hornetseye-v4l2
-======
+===============
 This Ruby extension provides camera input using Video for Linux version 2.
 
 **Author**:       Jan Wedekind
@@ -13,6 +13,7 @@ This Ruby extension provides the class {Hornetseye::V4L2Input} for capturing vid
 
 Installation
 ------------
+
 *hornetseye-v4l2* requires the V4L2 headers. If you are running Debian or (K)ubuntu, you can install them like this:
 
     $ sudo aptitude install linux-libc-dev
