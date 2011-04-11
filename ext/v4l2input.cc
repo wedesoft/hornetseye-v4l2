@@ -493,8 +493,10 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                    INT2NUM(V4L2_PIX_FMT_YVYU) );
   rb_define_const( cRubyClass, "MODE_UYVY",
                    INT2NUM(V4L2_PIX_FMT_UYVY) );
+#ifdef V4L2_PIX_FMT_VYUY
   rb_define_const( cRubyClass, "MODE_VYUY",
                    INT2NUM(V4L2_PIX_FMT_VYUY) );
+#endif
   rb_define_const( cRubyClass, "MODE_YUV422P",
                    INT2NUM(V4L2_PIX_FMT_YUV422P) );
   rb_define_const( cRubyClass, "MODE_YUV411P",
@@ -521,16 +523,22 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                    INT2NUM(V4L2_PIX_FMT_NV12) );
   rb_define_const( cRubyClass, "MODE_NV21",
                    INT2NUM(V4L2_PIX_FMT_NV21) );
+#ifdef V4L2_PIX_FMT_NV16
   rb_define_const( cRubyClass, "MODE_NV16",
                    INT2NUM(V4L2_PIX_FMT_NV16) );
+#endif
+#ifdef V4L2_PIX_FMT_NV61
   rb_define_const( cRubyClass, "MODE_NV61",
                    INT2NUM(V4L2_PIX_FMT_NV61) );
+#endif
   rb_define_const( cRubyClass, "MODE_SBGGR8",
                    INT2NUM(V4L2_PIX_FMT_SBGGR8) );
   rb_define_const( cRubyClass, "MODE_SGBRG8",
                    INT2NUM(V4L2_PIX_FMT_SGBRG8) );
+#ifdef V4L2_PIX_FMT_SGRBG8
   rb_define_const( cRubyClass, "MODE_SGRBG8",
                    INT2NUM(V4L2_PIX_FMT_SGRBG8) );
+#endif
   rb_define_const( cRubyClass, "MODE_SGRBG10",
                    INT2NUM(V4L2_PIX_FMT_SGRBG10) );
   rb_define_const( cRubyClass, "MODE_SGRBG10DPCM8",
@@ -549,8 +557,10 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                    INT2NUM(V4L2_PIX_FMT_WNVA) );
   rb_define_const( cRubyClass, "MODE_SN9C10X",
                    INT2NUM(V4L2_PIX_FMT_SN9C10X) );
+#ifdef V4L2_PIX_FMT_SN9C20X_I420
   rb_define_const( cRubyClass, "MODE_SN9C20X_I420",
                    INT2NUM(V4L2_PIX_FMT_SN9C20X_I420) );
+#endif
   rb_define_const( cRubyClass, "MODE_PWC1",
                    INT2NUM(V4L2_PIX_FMT_PWC1) );
   rb_define_const( cRubyClass, "MODE_PWC2",
@@ -567,16 +577,24 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                    INT2NUM(V4L2_PIX_FMT_SPCA561) );
   rb_define_const( cRubyClass, "MODE_PAC207",
                    INT2NUM(V4L2_PIX_FMT_PAC207) );
+#ifdef V4L2_PIX_FMT_MR97310A
   rb_define_const( cRubyClass, "MODE_MR97310A",
                    INT2NUM(V4L2_PIX_FMT_MR97310A) );
+#endif
+#ifdef V4L2_PIX_FMT_SQ905C
   rb_define_const( cRubyClass, "MODE_SQ905C",
                    INT2NUM(V4L2_PIX_FMT_SQ905C) );
+#endif
   rb_define_const( cRubyClass, "MODE_PJPG",
                    INT2NUM(V4L2_PIX_FMT_PJPG) );
+#ifdef V4L2_PIX_FMT_OV511
   rb_define_const( cRubyClass, "MODE_OV511",
                    INT2NUM(V4L2_PIX_FMT_OV511) );
+#endif
+#ifdef V4L2_PIX_FMT_OV518
   rb_define_const( cRubyClass, "MODE_OV518",
                    INT2NUM(V4L2_PIX_FMT_OV518) );
+#endif
   rb_define_const( cRubyClass, "TYPE_INTEGER",
                    INT2NUM(V4L2_CTRL_TYPE_INTEGER) );
   rb_define_const( cRubyClass, "TYPE_BOOLEAN",
