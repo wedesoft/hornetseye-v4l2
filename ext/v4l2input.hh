@@ -21,7 +21,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include "error.hh"
 #include "frame.hh"
 #include "v4l2select.hh"
