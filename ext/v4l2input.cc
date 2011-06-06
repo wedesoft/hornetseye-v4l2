@@ -64,6 +64,9 @@ V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (E
       format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
       format.index = formatIndex++;
       int r = xioctl( VIDIOC_ENUM_FMT, &format );
+#ifndef NDEBUG
+      cerr << "Requesting format " << (formatIndex - 1) << " with result " << r << endl;
+#endif
       if ( r != 0 ) break;
       unsigned int frameSizeIndex = 0;
       while ( true ) {
@@ -72,6 +75,10 @@ V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (E
         pix.pixel_format = format.pixelformat;
         pix.index = frameSizeIndex++;
         int r = xioctl( VIDIOC_ENUM_FRAMESIZES, &pix );
+#ifndef NDEBUG
+        cerr << "Requesting frame size " << (frameSizeIndex - 1) << " for format "
+             << (formatIndex - 1) << " with result " << r << endl;
+#endif
         if ( r != 0 ) break;
         if ( pix.type == V4L2_FRMSIZE_TYPE_DISCRETE )
           select->add( format.pixelformat, pix.discrete.width, pix.discrete.height );
