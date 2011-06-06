@@ -47,7 +47,8 @@ module Hornetseye
                   MODE_YUYV   => YUY2,
                   MODE_YUV420 => I420,
                   MODE_GREY   => UBYTE,
-                  MODE_RGB24  => UBYTERGB }
+                  MODE_RGB24  => UBYTERGB,
+                  MODE_BGR24  => BGR }
           frame_types, index = [], []
           modes.each_with_index do |mode,i|
             target = map[ mode.first ]
@@ -59,7 +60,7 @@ module Hornetseye
           if action
             desired = action.call frame_types
           else
-            preference = [ I420, UYVY, YUY2, UBYTERGB, UBYTE ]
+            preference = [ I420, UYVY, YUY2, UBYTERGB, BGR, UBYTE ]
             desired = frame_types.sort_by do |mode|
               [ -preference.index( mode.typecode ), mode.width * mode.height ]
             end.last

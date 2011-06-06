@@ -122,11 +122,14 @@ V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (E
     case V4L2_PIX_FMT_RGB24:
       m_typecode = "UBYTERGB";
       break;
+    case V4L2_PIX_FMT_BGR24:
+      m_typecode = "BGR";
+      break;
     case V4L2_PIX_FMT_MJPEG:
       m_typecode = "MJPG";
       break;
     default:
-      ERRORMACRO( false, Error, , "Conversion for DC1394 colorspace " << coding
+      ERRORMACRO( false, Error, , "Conversion for V4L2 colorspace " << coding
                   << " not implemented yet" );
     };
     if ( capability.capabilities & V4L2_CAP_STREAMING ) {
