@@ -97,18 +97,17 @@ V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (E
         };
       };
     };
-    unsigned int selection = select->make();
-    unsigned int coding = select->coding( selection );
+    select->make();
+    unsigned int coding = select->coding();
 #ifndef NDEBUG
-    cerr << "selection = " << selection << endl
-         << "coding = " << select->coding( selection ) << endl
-         << "w = " << select->width( selection ) << endl
-         << "h = " << select->height( selection ) << endl;
+    cerr << "coding = " << select->coding() << endl
+         << "w = " << select->width() << endl
+         << "h = " << select->height() << endl;
 #endif
     m_format.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     m_format.fmt.pix.field       = V4L2_FIELD_NONE;
-    m_format.fmt.pix.width       = select->width( selection );
-    m_format.fmt.pix.height      = select->height( selection );
+    m_format.fmt.pix.width       = select->width();
+    m_format.fmt.pix.height      = select->height();
     m_format.fmt.pix.pixelformat = coding;
     m_format.fmt.pix.field       = V4L2_FIELD_SEQ_TB;
     ERRORMACRO( xioctl( VIDIOC_S_FMT, &m_format ) == 0, Error, ,

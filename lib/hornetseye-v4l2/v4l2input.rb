@@ -49,26 +49,24 @@ module Hornetseye
                   MODE_GREY   => UBYTE,
                   MODE_RGB24  => UBYTERGB,
                   MODE_BGR24  => BGR }
-          frame_types, index = [], []
-          modes.each_with_index do |mode,i|
-            target = map[ mode.first ]
+          frame_types = []
+          modes.each_with_index do |mode|
+            target = map[mode.first]
             if target
-              frame_types.push Hornetseye::Frame( target, *mode[ 1 .. 2 ] )
-              index.push i
+              frame_types.push Hornetseye::Frame(target, *mode[1 .. 2])
             end
           end
           if action
             desired = action.call frame_types
           else
-            preference = [ I420, UYVY, YUY2, UBYTERGB, BGR, UBYTE ]
+            preference = [I420, UYVY, YUY2, UBYTERGB, BGR, UBYTE]
             desired = frame_types.sort_by do |mode|
               [ -preference.index( mode.typecode ), mode.width * mode.height ]
             end.last
           end
-          unless frame_types.member? desired
-            raise "Frame type #{desired.inspect} not supported by camera"
-          end
-          index[ frame_types.index( desired ) ]
+          mode = map.invert[desired.typecode]
+          raise "Video mode #{desired.typecode} not supported" unless mode
+          [mode, desired.width, desired.height]
         end
       end
 

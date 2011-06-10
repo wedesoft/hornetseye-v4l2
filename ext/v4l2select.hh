@@ -26,13 +26,14 @@ public:
   V4L2Select(void) throw (Error);
   virtual ~V4L2Select(void);
   void add( unsigned int coding, unsigned int width, unsigned int height );
-  unsigned int make(void) throw (Error);
-  unsigned int coding( unsigned int selection );
-  unsigned int width( unsigned int selection );
-  unsigned int height( unsigned int selection );
+  void make(void) throw (Error);
+  unsigned int coding(void);
+  unsigned int width(void);
+  unsigned int height(void);
   static VALUE wrapRescue( VALUE rbValue );
 protected:
   VALUE m_rbArray;
+  VALUE m_rbSelection;
 };
 
 typedef boost::shared_ptr< V4L2Select > V4L2SelectPtr;

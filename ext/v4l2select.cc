@@ -17,7 +17,7 @@
 #include "v4l2select.hh"
 
 V4L2Select::V4L2Select(void) throw (Error):
-  m_rbArray(rb_ary_new())
+  m_rbArray(rb_ary_new()), m_rbSelection(Qnil)
 {
 }
 
@@ -36,33 +36,32 @@ static VALUE yield( VALUE arg )
   return rb_yield( arg );
 }
 
-unsigned int V4L2Select::make(void) throw (Error)
+void V4L2Select::make(void) throw (Error)
 {
   int error;
-  VALUE rbRetVal = rb_protect( yield, m_rbArray, &error );
+  m_rbSelection = rb_protect( yield, m_rbArray, &error );
   if ( error ) {
     VALUE rbError = rb_funcall( rb_gv_get( "$!" ), rb_intern( "message" ), 0 );
     ERRORMACRO( false, Error, , "Error in block to \"V4L2Input.new\": "
                 << StringValuePtr( rbError ) );
   };
-  ERRORMACRO( TYPE( rbRetVal ) == T_FIXNUM, Error, , "Block must return a value of "
-              "type 'Fixnum'" );
-  return NUM2UINT(rbRetVal);
+  ERRORMACRO( TYPE( m_rbSelection ) == T_ARRAY, Error, , "Block must return a value of "
+              "type 'Array'" );
 }
 
-unsigned int V4L2Select::coding( unsigned int selection )
+unsigned int V4L2Select::coding(void)
 {
-  return NUM2INT( RARRAY_PTR( RARRAY_PTR(m_rbArray)[ selection ] )[ 0 ] );
+  return NUM2INT(RARRAY_PTR(m_rbSelection)[ 0 ]);
 }
 
-unsigned int V4L2Select::width( unsigned int selection )
+unsigned int V4L2Select::width(void)
 {
-  return NUM2INT( RARRAY_PTR( RARRAY_PTR(m_rbArray)[ selection ] )[ 1 ] );
+  return NUM2INT(RARRAY_PTR(m_rbSelection)[ 1 ]);
 }
 
-unsigned int V4L2Select::height( unsigned int selection )
+unsigned int V4L2Select::height(void)
 {
-  return NUM2INT( RARRAY_PTR( RARRAY_PTR(m_rbArray)[ selection ] )[ 2 ] );
+  return NUM2INT(RARRAY_PTR(m_rbSelection)[ 2 ]);
 }
 
 VALUE V4L2Select::wrapRescue( VALUE rbValue )
