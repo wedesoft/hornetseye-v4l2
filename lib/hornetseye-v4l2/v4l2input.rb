@@ -39,10 +39,11 @@ module Hornetseye
       #   camera = V4L2Input.new { |modes| modes.last }
       #
       # @param [String] device The device file name.
+      # @param [Integer] channel Number of the input channel to use.
       # @param [Proc] action An optional block for selecting the desired video mode.
       # @return [V4L2Input] An object for accessing the camera.
-      def new( device = '/dev/video0', &action )
-        orig_new device do |modes|
+      def new( device = '/dev/video0', channel = 0, &action )
+        orig_new device, channel do |modes|
           map = { MODE_UYVY   => UYVY,
                   MODE_YUYV   => YUY2,
                   MODE_YUV420 => I420,

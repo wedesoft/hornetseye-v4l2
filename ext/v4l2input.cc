@@ -30,7 +30,8 @@ using namespace std;
 
 VALUE V4L2Input::cRubyClass = Qnil;
 
-V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (Error):
+V4L2Input::V4L2Input( const std::string &device, int channel,
+                      V4L2SelectPtr select ) throw (Error):
   m_device(device), m_fd(-1), m_io(IO_READ), m_frameUsed(false)
 {
   m_map[ 0 ] = MAP_FAILED;
@@ -57,6 +58,9 @@ V4L2Input::V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (E
 #endif
     ERRORMACRO( capability.capabilities & V4L2_CAP_VIDEO_CAPTURE != 0,
                 Error, , m_device << " is no video capture device" );
+    ERRORMACRO( xioctl( VIDIOC_S_INPUT, &channel ) == 0, Error, ,
+                "Error selecting channel " << channel << " for device \""
+                << m_device << "\"" );
     unsigned int formatIndex = 0;
     while ( true ) {
       struct v4l2_fmtdesc format;
@@ -670,7 +674,7 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                    INT2NUM(V4L2_CID_VCENTER) );
   rb_define_const( cRubyClass, "FEATURE_LASTP1",
                    INT2NUM(V4L2_CID_LASTP1) );
-  rb_define_singleton_method( cRubyClass, "new", RUBY_METHOD_FUNC( wrapNew ), 1 );
+  rb_define_singleton_method( cRubyClass, "new", RUBY_METHOD_FUNC( wrapNew ), 2 );
   rb_define_method( cRubyClass, "close",
                     RUBY_METHOD_FUNC( wrapClose ), 0 );
   rb_define_method( cRubyClass, "read",
@@ -707,13 +711,13 @@ void V4L2Input::deleteRubyObject( void *ptr )
   delete (V4L2InputPtr *)ptr;
 }
 
-VALUE V4L2Input::wrapNew( VALUE rbClass, VALUE rbDevice )
+VALUE V4L2Input::wrapNew( VALUE rbClass, VALUE rbDevice, VALUE rbChannel )
 {
   VALUE retVal = Qnil;
   try {
     rb_check_type( rbDevice, T_STRING );
     V4L2SelectPtr select( new V4L2Select );
-    V4L2InputPtr ptr( new V4L2Input( StringValuePtr( rbDevice ), select ) );
+    V4L2InputPtr ptr(new V4L2Input(StringValuePtr(rbDevice), NUM2INT(rbChannel), select));
     retVal = Data_Wrap_Struct( rbClass, 0, deleteRubyObject,
                                new V4L2InputPtr( ptr ) );
   } catch ( std::exception &e ) {

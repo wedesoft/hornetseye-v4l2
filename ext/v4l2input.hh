@@ -29,7 +29,7 @@
 class V4L2Input
 {
 public:
-  V4L2Input( const std::string &device, V4L2SelectPtr select ) throw (Error);
+  V4L2Input( const std::string &device, int channel, V4L2SelectPtr select ) throw (Error);
   virtual ~V4L2Input(void);
   void close(void);
   FramePtr read(void) throw (Error);
@@ -49,7 +49,7 @@ public:
   static VALUE cRubyClass;
   static VALUE registerRubyClass( VALUE module );
   static void deleteRubyObject( void *ptr );
-  static VALUE wrapNew( VALUE rbClass, VALUE rbDevice );
+  static VALUE wrapNew( VALUE rbClass, VALUE rbDevice, VALUE rbChannel );
   static VALUE wrapClose( VALUE rbSelf );
   static VALUE wrapRead( VALUE rbSelf );
   static VALUE wrapStatus( VALUE rbSelf );
