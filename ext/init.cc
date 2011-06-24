@@ -30,7 +30,7 @@ extern "C" {
 
   void Init_hornetseye_v4l2(void)
   {
-    rb_require( "hornetseye_frame" );
+    rb_eval_string( "require 'hornetseye_frame'" );
     VALUE rbHornetseye = rb_define_module( "Hornetseye" );
     V4L2Input::registerRubyClass( rbHornetseye );
     rb_require( "hornetseye_v4l2_ext.rb" );
