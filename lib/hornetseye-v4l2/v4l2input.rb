@@ -50,6 +50,11 @@ module Hornetseye
                   MODE_GREY   => UBYTE,
                   MODE_RGB24  => UBYTERGB,
                   MODE_BGR24  => BGR }
+          modes.each do |mode|
+            unless map[mode.first]
+              warn "Unsupported video mode #{"0x%08x" % mode.first} #{mode[1]}x#{mode[2]}"
+            end
+          end
           frame_types = modes.collect { |mode| [map[mode.first], *mode[1 .. 2]] }.
             select { |mode| mode.first }
           if action
@@ -59,6 +64,7 @@ module Hornetseye
             desired = frame_types.sort_by do |mode|
               [-preference.index(mode.first), mode[1] * mode[2]]
             end.last
+            raise "Device does not support a known video mode" unless desired
           end
           mode = map.invert[desired[0]]
           raise "Video mode #{desired.typecode} not supported" unless mode
