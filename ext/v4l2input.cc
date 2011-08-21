@@ -109,11 +109,10 @@ V4L2Input::V4L2Input( const std::string &device, int channel,
          << "h = " << select->height() << endl;
 #endif
     m_format.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    m_format.fmt.pix.field       = V4L2_FIELD_NONE;
     m_format.fmt.pix.width       = select->width();
     m_format.fmt.pix.height      = select->height();
     m_format.fmt.pix.pixelformat = coding;
-    m_format.fmt.pix.field       = V4L2_FIELD_SEQ_TB;
+    m_format.fmt.pix.field       = V4L2_FIELD_ANY; // V4L2_FIELD_SEQ_TB
     ERRORMACRO( xioctl( VIDIOC_S_FMT, &m_format ) == 0, Error, ,
                  "Error switching device \"" << m_device << "\" to selected format" );
     switch ( coding ) {
@@ -147,7 +146,7 @@ V4L2Input::V4L2Input( const std::string &device, int channel,
 #ifndef NDEBUG
         cerr << "Trying memory mapped I/O." << endl;
 #endif
-        // m_format.fmt.pix.sizeimage;
+        // m_format.fmt.pix.sizeimage?
         memset( &m_req, 0, sizeof(m_req) );
         m_req.count = 2;
         m_req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
