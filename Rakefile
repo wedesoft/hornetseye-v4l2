@@ -7,7 +7,7 @@ require 'rake/loaders/makefile'
 require 'rbconfig'
 
 PKG_NAME = 'hornetseye-v4l2'
-PKG_VERSION = '0.4.2'
+PKG_VERSION = '1.0.0'
 CFG = RbConfig::CONFIG
 CXX = ENV[ 'CXX' ] || 'g++'
 RB_FILES = FileList[ 'lib/**/*.rb' ]
@@ -114,7 +114,7 @@ begin
     s.extra_rdoc_files = []
     s.rdoc_options = %w{--no-private}
     s.add_dependency %<malloc>, [ '~> 1.1' ]
-    s.add_dependency %<multiarray>, [ '~> 0.23' ]
+    s.add_dependency %<multiarray>, [ '~> 1.0' ]
     s.add_dependency %<hornetseye-frame>, [ '~> 0.11' ]
     s.add_development_dependency %q{rake}
   end
@@ -137,7 +137,7 @@ begin
     s.extra_rdoc_files = []
     s.rdoc_options = %w{--no-private}
     s.add_dependency %<malloc>, [ '~> 1.1' ]
-    s.add_dependency %<multiarray>, [ '~> 0.23' ]
+    s.add_dependency %<multiarray>, [ '~> 1.0' ]
     s.add_dependency %<hornetseye-frame>, [ '~> 0.11' ]
   end
   GEM_BINARY = "#{PKG_NAME}-#{PKG_VERSION}-#{$BINSPEC.platform}.gem"
