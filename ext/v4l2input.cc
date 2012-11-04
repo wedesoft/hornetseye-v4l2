@@ -335,15 +335,15 @@ void V4L2Input::setFeatureValue( unsigned int id, int value )
 enum v4l2_ctrl_type V4L2Input::featureType( unsigned int id )
   throw (Error)
 {
-  ERRORMACRO( m_fd != -1, Error, ,
-              "Device \"" << m_device << "\" is not open. "
-              "Did you call \"close\" before?" );
+  ERRORMACRO(m_fd != -1, Error, ,
+             "Device \"" << m_device << "\" is not open. "
+             "Did you call \"close\" before?" );
   struct v4l2_queryctrl queryctrl;
   memset( &queryctrl, 0, sizeof(queryctrl) );
   queryctrl.id = id;
   ERRORMACRO( xioctl( VIDIOC_QUERYCTRL, &queryctrl ) == 0, Error, ,
               "Error requesting information about control " << id );
-  return queryctrl.type;
+  return (v4l2_ctrl_type)queryctrl.type;
 }
 
 string V4L2Input::featureName( unsigned int id )
