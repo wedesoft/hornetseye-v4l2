@@ -16,7 +16,7 @@ Installation
 
 *hornetseye-v4l2* requires the V4L2 headers. If you are running Debian or (K)ubuntu, you can install them like this:
 
-    $ sudo aptitude install linux-libc-dev libboost-dev
+    $ sudo aptitude install linux-libc-dev libswscale-dev libboost-dev
 
 To install this Ruby extension, use the following command:
 
