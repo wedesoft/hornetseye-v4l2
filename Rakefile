@@ -7,7 +7,7 @@ require 'rake/loaders/makefile'
 require 'rbconfig'
 
 PKG_NAME = 'hornetseye-v4l2'
-PKG_VERSION = '1.0.2'
+PKG_VERSION = '1.0.3'
 CFG = RbConfig::CONFIG
 CXX = ENV[ 'CXX' ] || 'g++'
 RB_FILES = FileList[ 'lib/**/*.rb' ]
@@ -22,6 +22,7 @@ BIN_FILES = [ 'README.md', 'COPYING', '.document', SO_FILE ] +
             RB_FILES + TS_FILES + TC_FILES
 SUMMARY = %q{Camera input using Video for Linux version 2}
 DESCRIPTION = %q{This Ruby extension provides camera input using Video for Linux version 2.}
+LICENSE = 'GPL-3+'
 AUTHOR = %q{Jan Wedekind}
 EMAIL = %q{jan@wedesoft.de}
 HOMEPAGE = %q{http://wedesoft.github.com/hornetseye-v4l2/}
@@ -102,6 +103,7 @@ begin
     s.date = Date.today.to_s
     s.summary = SUMMARY
     s.description = DESCRIPTION
+    s.license = LICENSE
     s.author = AUTHOR
     s.email = EMAIL
     s.homepage = HOMEPAGE
@@ -126,6 +128,7 @@ begin
     s.date = Date.today.to_s
     s.summary = SUMMARY
     s.description = DESCRIPTION
+    s.license = LICENSE
     s.author = AUTHOR
     s.email = EMAIL
     s.homepage = HOMEPAGE
