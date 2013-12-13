@@ -667,10 +667,14 @@ VALUE V4L2Input::registerRubyClass( VALUE module )
                    INT2NUM(V4L2_CID_HFLIP) );
   rb_define_const( cRubyClass, "FEATURE_VFLIP",
                    INT2NUM(V4L2_CID_VFLIP) );
+#ifdef V4L2_CID_HCENTER
   rb_define_const( cRubyClass, "FEATURE_HCENTER",
                    INT2NUM(V4L2_CID_HCENTER) );
+#endif
+#ifdef V4L2_CID_VCENTER
   rb_define_const( cRubyClass, "FEATURE_VCENTER",
                    INT2NUM(V4L2_CID_VCENTER) );
+#endif
   rb_define_const( cRubyClass, "FEATURE_LASTP1",
                    INT2NUM(V4L2_CID_LASTP1) );
   rb_define_singleton_method( cRubyClass, "new", RUBY_METHOD_FUNC( wrapNew ), 2 );
