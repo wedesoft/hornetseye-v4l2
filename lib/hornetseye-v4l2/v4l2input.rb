@@ -48,6 +48,7 @@ module Hornetseye
                   MODE_YUYV   => YUY2,
                   MODE_YUV420 => I420,
                   MODE_GREY   => UBYTE,
+                  MODE_Y16    => USINT,
                   MODE_RGB24  => UBYTERGB,
                   MODE_BGR24  => BGR }
           modes.each do |mode|
