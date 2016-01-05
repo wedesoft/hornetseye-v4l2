@@ -61,7 +61,7 @@ module Hornetseye
           if action
             desired = action.call frame_types
           else
-            preference = [I420, UYVY, YUY2, UBYTERGB, BGR, UBYTE]
+            preference = [I420, UYVY, YUY2, UBYTERGB, BGR, USINT, UBYTE]
             desired = frame_types.sort_by do |mode|
               [-preference.index(mode.first), mode[1] * mode[2]]
             end.last
