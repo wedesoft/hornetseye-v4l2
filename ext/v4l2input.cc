@@ -128,6 +128,9 @@ V4L2Input::V4L2Input( const std::string &device, int channel,
     case V4L2_PIX_FMT_GREY:
       m_typecode = "UBYTE";
       break;
+    case V4L2_PIX_FMT_Y16:
+      m_typecode = "USINT";
+      break;
     case V4L2_PIX_FMT_RGB24:
       m_typecode = "UBYTERGB";
       break;
