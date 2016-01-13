@@ -51,17 +51,17 @@ void V4L2Select::make(void) throw (Error)
 
 unsigned int V4L2Select::coding(void)
 {
-  return NUM2INT(RARRAY_PTR(m_rbSelection)[ 0 ]);
+  return NUM2INT(rb_ary_entry(m_rbSelection, 0));
 }
 
 unsigned int V4L2Select::width(void)
 {
-  return NUM2INT(RARRAY_PTR(m_rbSelection)[ 1 ]);
+  return NUM2INT(rb_ary_entry(m_rbSelection, 1));
 }
 
 unsigned int V4L2Select::height(void)
 {
-  return NUM2INT(RARRAY_PTR(m_rbSelection)[ 2 ]);
+  return NUM2INT(rb_ary_entry(m_rbSelection, 2));
 }
 
 VALUE V4L2Select::wrapRescue( VALUE rbValue )
