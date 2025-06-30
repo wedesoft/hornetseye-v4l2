@@ -1,3 +1,4 @@
+require 'date'
 require_relative 'config'
 
 Gem::Specification.new do |s|
