@@ -19,4 +19,4 @@ DESCRIPTION = %q{This Ruby extension provides camera input using Video for Linux
 LICENSE = 'GPL-3+'
 AUTHOR = %q{Jan Wedekind}
 EMAIL = %q{jan@wedesoft.de}
-HOMEPAGE = %q{http://wedesoft.github.com/hornetseye-v4l2/}
+HOMEPAGE = %q{http://wedesoft.github.io/hornetseye-v4l2/}
